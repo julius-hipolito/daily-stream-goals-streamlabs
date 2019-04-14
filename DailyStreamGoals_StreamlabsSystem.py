@@ -122,10 +122,10 @@ def ReadResetDate():
 			resetDateText = f.readline()
 			resetDateFromFile = datetime.strptime(resetDateText, "%Y-%m-%dT%H:%M:%S.%f")
 			# Reset hour again in the event the user changed the reset hour after the file was created.
-			resetDateFromFile.replace(hour=settings["resetHour"])
+			resetDateFromFile.replace(hour=int(settings["resetHour"]))
 			resetDate = resetDateFromFile
 	else:
-		resetDate = datetime.now().replace(hour=settings["resetHour"], minute=0)
+		resetDate = datetime.now().replace(hour=int(settings["resetHour"]), minute=0)
 		resetDate += timedelta(days=1)
 
 		WriteResetDate(resetDate)
@@ -186,7 +186,7 @@ def WriteTargetFollows(count):
 def CheckAndProcessReset():
 	if datetime.now() >= settings["currentResetDate"]:
 		# Reset settings
-		nextDateTime = datetime.now().replace(hour=settings['resetHour'], minute=0)
+		nextDateTime = datetime.now().replace(hour=int(settings['resetHour']), minute=0)
 		nextDateTime += timedelta(days=1)
 
 		settings["currentResetDate"] = nextDateTime
