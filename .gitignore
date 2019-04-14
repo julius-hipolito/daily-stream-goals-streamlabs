@@ -1,6 +1,10 @@
 # Directories
 Files/
 
+# Script Config Files
+config.js
+config.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
