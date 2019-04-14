@@ -1,0 +1,35 @@
+{
+	"output_file": "config.json",
+	"resetHour": {
+		"type": "slider",
+		"label": "Reset Hour (0 is 12:00 Midnight local time)",
+		"value": 0,
+		"min": 0,
+		"max": 23,
+		"ticks": 1,
+		"tooltip": "Set the hour of the day that the reset will occur.",
+		"group": "General"
+	},
+	"subTarget": {
+		"type": "numberbox",
+		"label": "Target Subscriptions",
+		"value": 10,
+		"tooltip": "",
+		"group": "General"
+	},
+	"followTarget": {
+		"type": "numberbox",
+		"label": "Target Follows",
+		"value": 10,
+		"tooltip": "Target number of Daily Follows",
+		"group": "General"
+	},
+	"openReadMe": {
+		"type": "button",
+		"label": "Open 'READ ME' file",
+		"tooltip": "Opens the 'README.md' for this script.",
+		"function": "OpenReadMe",
+		"wsevent": "",
+		"group": ""
+	}
+}
