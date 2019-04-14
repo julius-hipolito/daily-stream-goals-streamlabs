@@ -1,4 +1,4 @@
-[[![Level Headed Gamers](https://img.shields.io/discord/371472684510609408.svg)](https://discord.gg/aY7vdnW)] [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Level Headed Gamers](https://img.shields.io/discord/371472684510609408.svg)](https://discord.gg/aY7vdnW) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # daily-stream-goals (Work In Progress)
 Daily Stream Goals for StreamLabs ChatBot.
