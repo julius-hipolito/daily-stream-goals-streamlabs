@@ -3,7 +3,7 @@
 	"resetHour": {
 		"type": "slider",
 		"label": "Reset Hour (0 is 12:00 Midnight local time)",
-		"value": 0,
+		"value": 3,
 		"min": 0,
 		"max": 23,
 		"ticks": 1,
@@ -13,7 +13,7 @@
 	"subTarget": {
 		"type": "numberbox",
 		"label": "Target Subscriptions",
-		"value": 10,
+		"value": 1,
 		"tooltip": "",
 		"group": "General"
 	},
