@@ -257,3 +257,11 @@ def EventReceiverEvent(sender, args):
 				WriteCurrentSubs(currentSubs)
 
 	return
+
+# ---------------------------
+# Helper method used by UI_Config.json to open the README.md file from script settings ui.
+# ---------------------------
+def OpenReadMe():
+	location = os.path.join(os.path.dirname(__file__), "README.md")
+	os.startfile(location)
+	return

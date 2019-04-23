@@ -12,3 +12,7 @@ Provide streamers a means of tracking and displaying daily goals for follows/sub
 
 # Contributions
 ALWAYS WELCOME!
+
+# CREDITS
+* [Ocgineer](https://github.com/ocgineer) for his work on Streamlabs Event Receiver Boilerplate!
+** http://www.twitch.tv/ocgineer
