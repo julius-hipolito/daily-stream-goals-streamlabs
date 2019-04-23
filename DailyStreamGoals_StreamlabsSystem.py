@@ -6,7 +6,7 @@ import os
 import codecs
 import sys
 import time
-
+import clr
 
 # ---------------------------
 # Import any custom modules under the "sys.path.append(os.path.dirname(__file__))" line
@@ -15,14 +15,17 @@ import time
 # ---------------------------
 sys.path.append(os.path.dirname(__file__))
 from datetime import datetime, date, time, timedelta
+clr.AddReference("IronPython.Modules.dll")
+clr.AddReferenceToFileAndPath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "StreamlabsEventReceiver.dll"))
+from StreamlabsEventReceiver import StreamlabsEventClient
 
 
 # ---------------------------
 # [Required] Script Information
 # ---------------------------
 ScriptName = "Daily Stream Goals"
-Website = "NA"
-Description = "Track daily goals subs, follows, cheers, and donations."
+Website = "https://github.com/Vizionz/daily-stream-goals-streamlabs"
+Description = "Track daily goals for subs, follows, cheers, and donations. Utilizes 'Streamlabs Event Receiver Boilerplate v1.0.1' from Ocgineer."
 Creator = "Level Headed Gamers"
 Version = "0.1.0"
 
@@ -41,6 +44,9 @@ subTargetFilePath = os.path.join(outputFileDir, "SubTarget.txt")
 followCurrentFilePath = os.path.join(outputFileDir, "FollowCurrent.txt")
 followTargetFilePath = os.path.join(outputFileDir, "FollowTarget.txt")
 
+EventReceiver = None
+
+
 # ---------------------------
 # [Required] Initialize Data (Only called on load)
 # ---------------------------
@@ -55,7 +61,8 @@ def Init():
 		settings = {
 			"resetHour": 0,
 			"subTarget": 1,
-			"followTarget": 5
+			"followTarget": 5,
+			"socket_token": ""
 		}
 
 	# Validate Files directory.
@@ -71,17 +78,34 @@ def Init():
 	
 	CheckAndProcessReset()
 
+	## Init the Streamlabs Event Receiver
+	global EventReceiver
+	EventReceiver = StreamlabsEventClient()
+	EventReceiver.StreamlabsSocketConnected += EventReceiverConnected
+	EventReceiver.StreamlabsSocketDisconnected += EventReceiverDisconnected
+	EventReceiver.StreamlabsSocketEvent += EventReceiverEvent
+
+	## Auto Connect if key is given in settings
+	if settings["socket_token"]:
+		EventReceiver.Connect(settings["socket_token"])
+	else:
+		Parent.Log("Stream Labs Socket Token is required. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens.")
+
 	return
+
 
 # ---------------------------
 # [Required] Execute Data / Process messages
 # ---------------------------
 def Execute(data):
-
-	# TODO - Capture twitch events here.
-
 	return
 
+# ---------------------------
+# [Required] Tick method (Gets called during every iteration even when there is no incoming data)
+# ---------------------------
+def Tick():
+	CheckAndProcessReset()
+	return
 
 # ---------------------------
 # [Optional] ScriptToggled (Notifies you when a user disables your script or enables it)
@@ -98,23 +122,22 @@ def ReloadSettings(jsonData):
 	return
 
 
-# ---------------------------
-# [Required] Tick method (Gets called during every iteration even when there is no incoming data)
-# ---------------------------
-def Tick():
+#---------------------------
+#   [Optional] Unload (Called when a user reloads their scripts or closes the bot / cleanup stuff)
+#---------------------------
+def Unload():
+	# Disconnect EventReceiver cleanly
+	global EventReceiver
+	if EventReceiver and EventReceiver.IsConnected:
+		EventReceiver.Disconnect()
+	EventReceiver = None
 	return
 
 
-# ---------------------------
-# Helper method used by UI_Config.json to open the README.md file from script settings ui.
-# ---------------------------
-def OpenReadMe():
-	location = os.path.join(os.path.dirname(__file__), "README.md")
-	os.startfile(location)
-	return
-
-############################################
-
+#---------------------------
+# File IO Functions
+#---------------------------
+# TODO - CLEAN UP! We dont need writes and read for each file. Move to single functions that take in path and string to write.
 def ReadResetDate():
 	resetDate = None
 	if os.path.isfile(resetDateFilePath):
@@ -181,8 +204,9 @@ def WriteTargetFollows(count):
 	followsFile.write(str(count))
 	followsFile.close()
 
-##########################################
-
+#---------------------------
+# Handles resetting files based on date
+#---------------------------
 def CheckAndProcessReset():
 	if datetime.now() >= settings["currentResetDate"]:
 		# Reset settings
@@ -196,4 +220,40 @@ def CheckAndProcessReset():
 		WriteResetDate(nextDateTime)
 		WriteCurrentSubs(0)
 		WriteCurrentFollows(0)
+	return
+
+
+#---------------------------------------
+# Socket Event Handlers - Thanks to Ocgineer!
+#---------------------------------------
+def EventReceiverConnected(sender, args):
+	Parent.Log(ScriptName, "Connected")
+	return
+
+def EventReceiverDisconnected(senmder, args):
+	Parent.Log(ScriptName, "Disconnected")
+
+def EventReceiverEvent(sender, args):
+	evntdata = args.Data
+	if evntdata and evntdata.For == "twitch_account":
+		if evntdata.Type == "follow":
+			for message in evntdata.Message:
+				Parent.Log("follow", message.Name)
+				currentFollows = int(settings["currentFollows"])
+				currentFollows = currentFollows + 1
+				settings["currentFollows"] = currentFollows
+				WriteCurrentFollows(currentFollows)
+
+		elif evntdata.Type == "bits":
+			for message in evntdata.Message:
+				Parent.Log("bits", message.Message)
+
+		elif evntdata.Type == "subscription":
+			for message in evntdata.Message:
+				Parent.Log("subscription", "{0} subscribed!".format(message.Name))
+				currentSubs = int(settings["currentSubs"])
+				currentSubs = currentSubs + 1
+				settings["currentSubs"] = currentSubs
+				WriteCurrentSubs(currentSubs)
+
 	return

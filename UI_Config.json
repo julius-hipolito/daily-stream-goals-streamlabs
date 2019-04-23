@@ -20,9 +20,16 @@
 	"followTarget": {
 		"type": "numberbox",
 		"label": "Target Follows",
-		"value": 10,
+		"value": 5,
 		"tooltip": "Target number of Daily Follows",
 		"group": "General"
+	},
+	"socket_token": {
+		"type": "textbox",
+		"label": "Streamlabs Socket Token",
+		"value": "",
+		"tooltip": "The Streamlabs Socket Token. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens.",		
+		"group": ""
 	},
 	"openReadMe": {
 		"type": "button",
