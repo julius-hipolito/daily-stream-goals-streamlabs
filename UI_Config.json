@@ -3,7 +3,7 @@
 	"resetHour": {
 		"type": "slider",
 		"label": "Reset Hour (0 is 12:00 Midnight local time)",
-		"value": 0,
+		"value": 3,
 		"min": 0,
 		"max": 23,
 		"ticks": 1,
@@ -13,16 +13,23 @@
 	"subTarget": {
 		"type": "numberbox",
 		"label": "Target Subscriptions",
-		"value": 10,
+		"value": 1,
 		"tooltip": "",
 		"group": "General"
 	},
 	"followTarget": {
 		"type": "numberbox",
 		"label": "Target Follows",
-		"value": 10,
+		"value": 5,
 		"tooltip": "Target number of Daily Follows",
 		"group": "General"
+	},
+	"socket_token": {
+		"type": "textbox",
+		"label": "Streamlabs Socket Token",
+		"value": "",
+		"tooltip": "The Streamlabs Socket Token. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens.",		
+		"group": ""
 	},
 	"openReadMe": {
 		"type": "button",

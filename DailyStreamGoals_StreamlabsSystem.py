@@ -6,7 +6,7 @@ import os
 import codecs
 import sys
 import time
-
+import clr
 
 # ---------------------------
 # Import any custom modules under the "sys.path.append(os.path.dirname(__file__))" line
@@ -15,16 +15,19 @@ import time
 # ---------------------------
 sys.path.append(os.path.dirname(__file__))
 from datetime import datetime, date, time, timedelta
+clr.AddReference("IronPython.Modules.dll")
+clr.AddReferenceToFileAndPath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "StreamlabsEventReceiver.dll"))
+from StreamlabsEventReceiver import StreamlabsEventClient
 
 
 # ---------------------------
 # [Required] Script Information
 # ---------------------------
 ScriptName = "Daily Stream Goals"
-Website = "NA"
-Description = "Track daily goals subs, follows, cheers, and donations."
+Website = "https://github.com/Vizionz/daily-stream-goals-streamlabs"
+Description = "Track daily goals for subs, follows, cheers, and donations. Utilizes 'Streamlabs Event Receiver Boilerplate v1.0.1' from Ocgineer."
 Creator = "Level Headed Gamers"
-Version = "0.1.0"
+Version = "1.0.0"
 
 
 # ---------------------------
@@ -41,6 +44,9 @@ subTargetFilePath = os.path.join(outputFileDir, "SubTarget.txt")
 followCurrentFilePath = os.path.join(outputFileDir, "FollowCurrent.txt")
 followTargetFilePath = os.path.join(outputFileDir, "FollowTarget.txt")
 
+EventReceiver = None
+
+
 # ---------------------------
 # [Required] Initialize Data (Only called on load)
 # ---------------------------
@@ -53,9 +59,10 @@ def Init():
 			settings = json.load(file, encoding='utf-8-sig')
 	except:
 		settings = {
-			"resetHour": 0,
+			"resetHour": 3,
 			"subTarget": 1,
-			"followTarget": 5
+			"followTarget": 5,
+			"socket_token": ""
 		}
 
 	# Validate Files directory.
@@ -66,20 +73,39 @@ def Init():
 	settings["currentSubs"] = ReadCurrentSubs()
 	settings["currentFollows"] = ReadCurrentFollows()
 
-	WriteTargetSubs(settings["subTarget"])
-	WriteTargetFollows(settings["followTarget"])
+	SimpleWriteToFile(subTargetFilePath, settings["subTarget"])
+	SimpleWriteToFile(followTargetFilePath, settings["followTarget"])
 	
 	CheckAndProcessReset()
 
+	## Init the Streamlabs Event Receiver
+	global EventReceiver
+	EventReceiver = StreamlabsEventClient()
+	EventReceiver.StreamlabsSocketConnected += EventReceiverConnected
+	EventReceiver.StreamlabsSocketDisconnected += EventReceiverDisconnected
+	EventReceiver.StreamlabsSocketEvent += EventReceiverEvent
+
+	## Auto Connect if key is given in settings
+	if settings["socket_token"]:
+		EventReceiver.Connect(settings["socket_token"])
+	else:
+		Parent.Log("Stream Labs Socket Token is required. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens.")
+
 	return
+
 
 # ---------------------------
 # [Required] Execute Data / Process messages
 # ---------------------------
 def Execute(data):
+	return
 
-	# TODO - Capture twitch events here.
 
+# ---------------------------
+# [Required] Tick method (Gets called during every iteration even when there is no incoming data)
+# ---------------------------
+def Tick():
+	CheckAndProcessReset()
 	return
 
 
@@ -98,37 +124,39 @@ def ReloadSettings(jsonData):
 	return
 
 
-# ---------------------------
-# [Required] Tick method (Gets called during every iteration even when there is no incoming data)
-# ---------------------------
-def Tick():
+#---------------------------
+#   [Optional] Unload (Called when a user reloads their scripts or closes the bot / cleanup stuff)
+#---------------------------
+def Unload():
+	# Disconnect EventReceiver cleanly
+	global EventReceiver
+	if EventReceiver and EventReceiver.IsConnected:
+		EventReceiver.Disconnect()
+	EventReceiver = None
 	return
 
 
-# ---------------------------
-# Helper method used by UI_Config.json to open the README.md file from script settings ui.
-# ---------------------------
-def OpenReadMe():
-	location = os.path.join(os.path.dirname(__file__), "README.md")
-	os.startfile(location)
-	return
-
-############################################
-
+#---------------------------
+# File IO Functions
+#---------------------------
 def ReadResetDate():
+	global resetDateFilePath
 	resetDate = None
 	if os.path.isfile(resetDateFilePath):
+		Parent.Log("RESET DATE", "Reset Date File Found!")
 		with open(resetDateFilePath) as f:
 			resetDateText = f.readline()
 			resetDateFromFile = datetime.strptime(resetDateText, "%Y-%m-%dT%H:%M:%S.%f")
 			# Reset hour again in the event the user changed the reset hour after the file was created.
-			resetDateFromFile.replace(hour=settings["resetHour"])
+			resetDateFromFile = resetDateFromFile.replace(hour=int(settings["resetHour"]))
 			resetDate = resetDateFromFile
+			Parent.Log("RESET DATE", str(resetDate))
 	else:
-		resetDate = datetime.now().replace(hour=settings["resetHour"], minute=0)
+		Parent.Log("RESET DATE", "Reset Date File NOT Found!")
+		resetDate = datetime.now().replace(hour=int(settings["resetHour"]), minute=0)
 		resetDate += timedelta(days=1)
 
-		WriteResetDate(resetDate)
+	WriteResetDate(resetDate)
 	return resetDate
 
 
@@ -138,26 +166,20 @@ def WriteResetDate(dateToWrite):
 	resetDateFile.close()
 
 
+def SimpleWriteToFile(filePath, text):
+	file = open(filePath, "w")
+	file.write(str(text))
+	file.close()
+
+
 def ReadCurrentSubs():
 	currentSubs = 0
 	if os.path.isfile(subCurrentFilePath):
 		with open(subCurrentFilePath) as f:
 			currentSubs = int(f.readline())
 	else:
-		WriteCurrentSubs(currentSubs)
+		SimpleWriteToFile(subCurrentFilePath, currentSubs)
 	return currentSubs
-
-
-def WriteCurrentSubs(count):
-	subsFile = open(subCurrentFilePath, "w")
-	subsFile.write(str(count))
-	subsFile.close()
-
-
-def WriteTargetSubs(count):
-	subsFile = open(subTargetFilePath, "w")
-	subsFile.write(str(count))
-	subsFile.close()
 
 
 def ReadCurrentFollows():
@@ -166,34 +188,70 @@ def ReadCurrentFollows():
 		with open(followCurrentFilePath) as f:
 			currentFollows = int(f.readline())
 	else:
-		WriteCurrentFollows(currentFollows)
+		SimpleWriteToFile(followCurrentFilePath, currentFollows)
 	return currentFollows
 
 
-def WriteCurrentFollows(count):
-	followsFile = open(followCurrentFilePath, "w")
-	followsFile.write(str(count))
-	followsFile.close()
-
-
-def WriteTargetFollows(count):
-	followsFile = open(followTargetFilePath, "w")
-	followsFile.write(str(count))
-	followsFile.close()
-
-##########################################
-
+#---------------------------
+# Handles resetting files based on date
+#---------------------------
 def CheckAndProcessReset():
 	if datetime.now() >= settings["currentResetDate"]:
 		# Reset settings
-		nextDateTime = datetime.now().replace(hour=settings['resetHour'], minute=0)
+		nextDateTime = datetime.now().replace(hour=int(settings['resetHour']), minute=0)
 		nextDateTime += timedelta(days=1)
 
 		settings["currentResetDate"] = nextDateTime
 		settings["currentSubs"] = 0
 		settings["currentFollows"] = 0
 
-		WriteResetDate(nextDateTime)
-		WriteCurrentSubs(0)
-		WriteCurrentFollows(0)
+		WriteResetDate(resetDateFilePath, nextDateTime)
+		SimpleWriteToFile(subCurrentFilePath, 0)
+		SimpleWriteToFile(followCurrentFilePath, 0)
+	return
+
+
+#---------------------------------------
+# Socket Event Handlers - Thanks to Ocgineer!
+#---------------------------------------
+def EventReceiverConnected(sender, args):
+	Parent.Log(ScriptName, "Connected")
+	return
+
+
+def EventReceiverDisconnected(senmder, args):
+	Parent.Log(ScriptName, "Disconnected")
+
+
+def EventReceiverEvent(sender, args):
+	evntdata = args.Data
+	if evntdata and evntdata.For == "twitch_account":
+		if evntdata.Type == "follow":
+			for message in evntdata.Message:
+				Parent.Log("follow", message.Name)
+				currentFollows = int(settings["currentFollows"])
+				currentFollows = currentFollows + 1
+				settings["currentFollows"] = currentFollows
+				SimpleWriteToFile(followCurrentFilePath, currentFollows)
+
+		elif evntdata.Type == "bits":
+			for message in evntdata.Message:
+				Parent.Log("bits", message.Message)
+
+		elif evntdata.Type == "subscription":
+			for message in evntdata.Message:
+				Parent.Log("subscription", "{0} subscribed!".format(message.Name))
+				currentSubs = int(settings["currentSubs"])
+				currentSubs = currentSubs + 1
+				settings["currentSubs"] = currentSubs
+				SimpleWriteToFile(subCurrentFilePath, currentSubs)
+
+	return
+
+# ---------------------------
+# Helper method used by UI_Config.json to open the README.md file from script settings ui.
+# ---------------------------
+def OpenReadMe():
+	location = os.path.join(os.path.dirname(__file__), "README.md")
+	os.startfile(location)
 	return
