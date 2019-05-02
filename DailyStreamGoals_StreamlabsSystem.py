@@ -27,7 +27,7 @@ ScriptName = "Daily Stream Goals"
 Website = "https://github.com/Vizionz/daily-stream-goals-streamlabs"
 Description = "Track daily goals for subs, follows, cheers, and donations. Utilizes 'Streamlabs Event Receiver Boilerplate v1.0.1' from Ocgineer."
 Creator = "Level Headed Gamers"
-Version = "0.1.0"
+Version = "1.0.0"
 
 
 # ---------------------------
@@ -59,7 +59,7 @@ def Init():
 			settings = json.load(file, encoding='utf-8-sig')
 	except:
 		settings = {
-			"resetHour": 0,
+			"resetHour": 3,
 			"subTarget": 1,
 			"followTarget": 5,
 			"socket_token": ""
@@ -73,8 +73,8 @@ def Init():
 	settings["currentSubs"] = ReadCurrentSubs()
 	settings["currentFollows"] = ReadCurrentFollows()
 
-	WriteTargetSubs(settings["subTarget"])
-	WriteTargetFollows(settings["followTarget"])
+	SimpleWriteToFile(subTargetFilePath, settings["subTarget"])
+	SimpleWriteToFile(followTargetFilePath, settings["followTarget"])
 	
 	CheckAndProcessReset()
 
@@ -100,12 +100,14 @@ def Init():
 def Execute(data):
 	return
 
+
 # ---------------------------
 # [Required] Tick method (Gets called during every iteration even when there is no incoming data)
 # ---------------------------
 def Tick():
 	CheckAndProcessReset()
 	return
+
 
 # ---------------------------
 # [Optional] ScriptToggled (Notifies you when a user disables your script or enables it)
@@ -137,21 +139,24 @@ def Unload():
 #---------------------------
 # File IO Functions
 #---------------------------
-# TODO - CLEAN UP! We dont need writes and read for each file. Move to single functions that take in path and string to write.
 def ReadResetDate():
+	global resetDateFilePath
 	resetDate = None
 	if os.path.isfile(resetDateFilePath):
+		Parent.Log("RESET DATE", "Reset Date File Found!")
 		with open(resetDateFilePath) as f:
 			resetDateText = f.readline()
 			resetDateFromFile = datetime.strptime(resetDateText, "%Y-%m-%dT%H:%M:%S.%f")
 			# Reset hour again in the event the user changed the reset hour after the file was created.
-			resetDateFromFile.replace(hour=int(settings["resetHour"]))
+			resetDateFromFile = resetDateFromFile.replace(hour=int(settings["resetHour"]))
 			resetDate = resetDateFromFile
+			Parent.Log("RESET DATE", str(resetDate))
 	else:
+		Parent.Log("RESET DATE", "Reset Date File NOT Found!")
 		resetDate = datetime.now().replace(hour=int(settings["resetHour"]), minute=0)
 		resetDate += timedelta(days=1)
 
-		WriteResetDate(resetDate)
+	WriteResetDate(resetDate)
 	return resetDate
 
 
@@ -161,26 +166,20 @@ def WriteResetDate(dateToWrite):
 	resetDateFile.close()
 
 
+def SimpleWriteToFile(filePath, text):
+	file = open(filePath, "w")
+	file.write(str(text))
+	file.close()
+
+
 def ReadCurrentSubs():
 	currentSubs = 0
 	if os.path.isfile(subCurrentFilePath):
 		with open(subCurrentFilePath) as f:
 			currentSubs = int(f.readline())
 	else:
-		WriteCurrentSubs(currentSubs)
+		SimpleWriteToFile(subCurrentFilePath, currentSubs)
 	return currentSubs
-
-
-def WriteCurrentSubs(count):
-	subsFile = open(subCurrentFilePath, "w")
-	subsFile.write(str(count))
-	subsFile.close()
-
-
-def WriteTargetSubs(count):
-	subsFile = open(subTargetFilePath, "w")
-	subsFile.write(str(count))
-	subsFile.close()
 
 
 def ReadCurrentFollows():
@@ -189,20 +188,9 @@ def ReadCurrentFollows():
 		with open(followCurrentFilePath) as f:
 			currentFollows = int(f.readline())
 	else:
-		WriteCurrentFollows(currentFollows)
+		SimpleWriteToFile(followCurrentFilePath, currentFollows)
 	return currentFollows
 
-
-def WriteCurrentFollows(count):
-	followsFile = open(followCurrentFilePath, "w")
-	followsFile.write(str(count))
-	followsFile.close()
-
-
-def WriteTargetFollows(count):
-	followsFile = open(followTargetFilePath, "w")
-	followsFile.write(str(count))
-	followsFile.close()
 
 #---------------------------
 # Handles resetting files based on date
@@ -217,9 +205,9 @@ def CheckAndProcessReset():
 		settings["currentSubs"] = 0
 		settings["currentFollows"] = 0
 
-		WriteResetDate(nextDateTime)
-		WriteCurrentSubs(0)
-		WriteCurrentFollows(0)
+		WriteResetDate(resetDateFilePath, nextDateTime)
+		SimpleWriteToFile(subCurrentFilePath, 0)
+		SimpleWriteToFile(followCurrentFilePath, 0)
 	return
 
 
@@ -230,8 +218,10 @@ def EventReceiverConnected(sender, args):
 	Parent.Log(ScriptName, "Connected")
 	return
 
+
 def EventReceiverDisconnected(senmder, args):
 	Parent.Log(ScriptName, "Disconnected")
+
 
 def EventReceiverEvent(sender, args):
 	evntdata = args.Data
@@ -242,7 +232,7 @@ def EventReceiverEvent(sender, args):
 				currentFollows = int(settings["currentFollows"])
 				currentFollows = currentFollows + 1
 				settings["currentFollows"] = currentFollows
-				WriteCurrentFollows(currentFollows)
+				SimpleWriteToFile(followCurrentFilePath, currentFollows)
 
 		elif evntdata.Type == "bits":
 			for message in evntdata.Message:
@@ -254,7 +244,7 @@ def EventReceiverEvent(sender, args):
 				currentSubs = int(settings["currentSubs"])
 				currentSubs = currentSubs + 1
 				settings["currentSubs"] = currentSubs
-				WriteCurrentSubs(currentSubs)
+				SimpleWriteToFile(subCurrentFilePath, currentSubs)
 
 	return
 
