@@ -205,7 +205,7 @@ def CheckAndProcessReset():
 		settings["currentSubs"] = 0
 		settings["currentFollows"] = 0
 
-		WriteResetDate(resetDateFilePath, nextDateTime)
+		WriteResetDate(nextDateTime)
 		SimpleWriteToFile(subCurrentFilePath, 0)
 		SimpleWriteToFile(followCurrentFilePath, 0)
 	return
