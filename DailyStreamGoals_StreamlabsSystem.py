@@ -27,7 +27,7 @@ ScriptName = "Daily Stream Goals"
 Website = "https://github.com/Vizionz/daily-stream-goals-streamlabs"
 Description = "Track daily goals for subs, follows, cheers, and donations. Utilizes 'Streamlabs Event Receiver Boilerplate v1.0.1' from Ocgineer."
 Creator = "Level Headed Gamers"
-Version = "1.0.0"
+Version = "1.1.0"
 
 
 # ---------------------------
@@ -41,8 +41,10 @@ outputFileDir = os.path.join(path, "Files")
 resetDateFilePath = os.path.join(outputFileDir, "ResetDate.txt")
 subCurrentFilePath = os.path.join(outputFileDir, "SubCurrent.txt")
 subTargetFilePath = os.path.join(outputFileDir, "SubTarget.txt")
+subFullOutputPath = os.path.join(outputFileDir, "SubOutput.txt")
 followCurrentFilePath = os.path.join(outputFileDir, "FollowCurrent.txt")
 followTargetFilePath = os.path.join(outputFileDir, "FollowTarget.txt")
+followFullOutputPath = os.path.join(outputFileDir, "FollowOutput.txt")
 
 EventReceiver = None
 
@@ -61,7 +63,9 @@ def Init():
 		settings = {
 			"resetHour": 3,
 			"subTarget": 1,
+			"subDivisor": "/",
 			"followTarget": 5,
+			"followDivisor": "/",
 			"socket_token": ""
 		}
 
@@ -75,7 +79,9 @@ def Init():
 
 	SimpleWriteToFile(subTargetFilePath, settings["subTarget"])
 	SimpleWriteToFile(followTargetFilePath, settings["followTarget"])
-	
+	SimpleWriteToFile(followFullOutputPath, str(settings["currentFollows"]) + settings["followDivisor"] + str(settings["followTarget"]))
+	SimpleWriteToFile(subFullOutputPath, str(settings["currentSubs"]) + settings["subDivisor"] + str(settings["subTarget"]))
+
 	CheckAndProcessReset()
 
 	## Init the Streamlabs Event Receiver
@@ -89,7 +95,7 @@ def Init():
 	if settings["socket_token"]:
 		EventReceiver.Connect(settings["socket_token"])
 	else:
-		Parent.Log("Stream Labs Socket Token is required. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens.")
+		Parent.Log("INIT", "Stream Labs Socket Token is required. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens.")
 
 	return
 
@@ -228,11 +234,13 @@ def EventReceiverEvent(sender, args):
 	if evntdata and evntdata.For == "twitch_account":
 		if evntdata.Type == "follow":
 			for message in evntdata.Message:
-				Parent.Log("follow", message.Name)
+				Parent.Log("follow", "{0} followed!!!".format(message.Name))
 				currentFollows = int(settings["currentFollows"])
 				currentFollows = currentFollows + 1
 				settings["currentFollows"] = currentFollows
 				SimpleWriteToFile(followCurrentFilePath, currentFollows)
+				SimpleWriteToFile(followFullOutputPath, str(currentFollows) + settings["followDivisor"] + str(settings["followTarget"]))
+
 
 		elif evntdata.Type == "bits":
 			for message in evntdata.Message:
@@ -240,11 +248,12 @@ def EventReceiverEvent(sender, args):
 
 		elif evntdata.Type == "subscription":
 			for message in evntdata.Message:
-				Parent.Log("subscription", "{0} subscribed!".format(message.Name))
+				Parent.Log("subscription", "{0} subscribed!!!".format(message.Name))
 				currentSubs = int(settings["currentSubs"])
 				currentSubs = currentSubs + 1
 				settings["currentSubs"] = currentSubs
 				SimpleWriteToFile(subCurrentFilePath, currentSubs)
+				SimpleWriteToFile(subFullOutputPath, str(currentSubs) + settings["subDivisor"] + str(settings["subTarget"]))
 
 	return
 

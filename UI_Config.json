@@ -1,5 +1,12 @@
 {
 	"output_file": "config.json",
+	"socket_token": {
+		"type": "textbox",
+		"label": "Streamlabs Socket Token",
+		"value": "",
+		"tooltip": "The Streamlabs Socket Token. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens.",		
+		"group": "General"
+	},
 	"resetHour": {
 		"type": "slider",
 		"label": "Reset Hour (0 is 12:00 Midnight local time)",
@@ -15,21 +22,28 @@
 		"label": "Target Subscriptions",
 		"value": 1,
 		"tooltip": "",
-		"group": "General"
+		"group": "Subscriber Settings"
+	},
+	"subDivisor": {
+		"type": "textbox",
+		"label": "Subs Divisor",
+		"value": "/",
+		"tooltip": "Divisor text to separate count and goal.",		
+		"group": "Subscriber Settings"
 	},
 	"followTarget": {
 		"type": "numberbox",
 		"label": "Target Follows",
 		"value": 5,
 		"tooltip": "Target number of Daily Follows",
-		"group": "General"
+		"group": "Follower Settings"
 	},
-	"socket_token": {
+	"followDivisor": {
 		"type": "textbox",
-		"label": "Streamlabs Socket Token",
-		"value": "",
-		"tooltip": "The Streamlabs Socket Token. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens.",		
-		"group": ""
+		"label": "Follow Divisor",
+		"value": "/",
+		"tooltip": "Divisor text to separate count and goal.",		
+		"group": "Follower Settings"
 	},
 	"openReadMe": {
 		"type": "button",
