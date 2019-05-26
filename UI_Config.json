@@ -44,6 +44,20 @@
 		"value": "/",
 		"tooltip": "Divisor text to separate count and goal.",		
 		"group": "Follower Settings"
+	},	
+	"bitTarget": {
+		"type": "numberbox",
+		"label": "Target Bits",
+		"value": 5,
+		"tooltip": "Target number of Daily Bits",
+		"group": "Bit Settings"
+	},
+	"bitDivisor": {
+		"type": "textbox",
+		"label": "Bit Divisor",
+		"value": "/",
+		"tooltip": "Divisor text to separate count and goal.",		
+		"group": "Bit Settings"
 	},
 	"openReadMe": {
 		"type": "button",

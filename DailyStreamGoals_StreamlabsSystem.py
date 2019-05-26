@@ -45,6 +45,9 @@ subFullOutputPath = os.path.join(outputFileDir, "SubOutput.txt")
 followCurrentFilePath = os.path.join(outputFileDir, "FollowCurrent.txt")
 followTargetFilePath = os.path.join(outputFileDir, "FollowTarget.txt")
 followFullOutputPath = os.path.join(outputFileDir, "FollowOutput.txt")
+bitCurrentFilePath = os.path.join(outputFileDir, "BitCurrent.txt")
+bitTargetFilePath = os.path.join(outputFileDir, "BitTarget.txt")
+bitFullOutputPath = os.path.join(outputFileDir, "BitOutput.txt")
 
 EventReceiver = None
 
@@ -66,6 +69,8 @@ def Init():
 			"subDivisor": "/",
 			"followTarget": 5,
 			"followDivisor": "/",
+			"bitTarget": 100,
+			"bitDivisor": "/",
 			"socket_token": ""
 		}
 
@@ -76,11 +81,14 @@ def Init():
 	settings["currentResetDate"] = ReadResetDate()
 	settings["currentSubs"] = ReadCurrentSubs()
 	settings["currentFollows"] = ReadCurrentFollows()
+	settings["currentBits"] = ReadCurrentBits()
 
 	SimpleWriteToFile(subTargetFilePath, settings["subTarget"])
 	SimpleWriteToFile(followTargetFilePath, settings["followTarget"])
+	SimpleWriteToFile(bitTargetFilePath, settings["bitTarget"])
 	SimpleWriteToFile(followFullOutputPath, str(settings["currentFollows"]) + settings["followDivisor"] + str(settings["followTarget"]))
 	SimpleWriteToFile(subFullOutputPath, str(settings["currentSubs"]) + settings["subDivisor"] + str(settings["subTarget"]))
+	SimpleWriteToFile(bitFullOutputPath, str(settings["currentBits"]) + settings["bitDivisor"] + str(settings["bitTarget"]))
 
 	CheckAndProcessReset()
 
@@ -197,6 +205,16 @@ def ReadCurrentFollows():
 	return currentFollows
 
 
+def ReadCurrentBits():
+	currentBits = 0
+	if os.path.isfile(bitCurrentFilePath):
+		with open(bitCurrentFilePath) as f:
+			currentBits = int(f.readline())
+	else:
+		SimpleWriteToFile(bitCurrentFilePath, currentBits)
+	return currentBits
+
+
 #---------------------------
 # Handles resetting files based on date
 #---------------------------
@@ -209,10 +227,12 @@ def CheckAndProcessReset():
 		settings["currentResetDate"] = nextDateTime
 		settings["currentSubs"] = 0
 		settings["currentFollows"] = 0
+		settings["currentBits"] = 0
 
 		WriteResetDate(nextDateTime)
 		SimpleWriteToFile(subCurrentFilePath, 0)
 		SimpleWriteToFile(followCurrentFilePath, 0)
+		SimpleWriteToFile(subCurrentFilePath, 0)
 	return
 
 
@@ -244,6 +264,11 @@ def EventReceiverEvent(sender, args):
 		elif evntdata.Type == "bits":
 			for message in evntdata.Message:
 				Parent.Log(ScriptName, "{0} cheered - {1}!!!".format(message.Name, message.Amount))
+				currentBits = int(settings["currentBits"])
+				currentBits = currentBits + int(message.Amount)
+				settings["currentBits"] = currentBits
+				SimpleWriteToFile(bitCurrentFilePath, currentBits)
+				SimpleWriteToFile(bitFullOutputPath, str(currentBits) + settings["bitDivisor"] + str(settings["bitTarget"]))
 
 		elif evntdata.Type == "subscription":
 			for message in evntdata.Message:

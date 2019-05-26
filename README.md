@@ -3,7 +3,8 @@
 # Daily Stream Goals
 Daily Stream Goals script for StreamLabs ChatBot. As a streamer, sometimes you stream multiple times in a day. As a streamer, you may also have daily goals you'd like to hit. For those that want the ability to keep track with an option to display your goals, this may be what you are looking for.
 
-- Keep track of new followers, and subscritions. Bits and Donations to come!
+## Features
+- Keep track of new followers, bits, and subscritions.
 - `.txt` output for goal and current counters.
 - Add a separation string for formatted goal ouputs in their own `.txt` for you to display.
 - Set your own reset timer in your local timezone. Maybe say, 5:00 AM for the late night streamers?
@@ -14,7 +15,8 @@ Daily Stream Goals script for StreamLabs ChatBot. As a streamer, sometimes you s
 
 # Changes
 
-## Pending
+## v1.2.0
+* Add Bit goals.
 * Update `StreamlabsEventReceiver` to `v1.0.2`.
 
 ## v1.1.0
@@ -23,7 +25,7 @@ Daily Stream Goals script for StreamLabs ChatBot. As a streamer, sometimes you s
   *  Example: `10/500`
 
 ## v1.0.0
-* Provide streamers a means of tracking and displaying daily goals for follows/subs/cheers/donations. Both 'current' and 'target' goals are written to .txt files for use to display on stream.
+* Provide streamers a means of tracking and displaying daily goals for follows/subs. Both 'current' and 'target' goals are written to .txt files for use to display on stream.
 
 # Credits
 * [Ocgineer](https://github.com/ocgineer) for his work on [Streamlabs Event Receiver](https://github.com/ocgineer/Streamlabs-Events-Receiver)! [Twitch](http://www.twitch.tv/ocgineer)
