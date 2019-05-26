@@ -95,7 +95,7 @@ def Init():
 	if settings["socket_token"]:
 		EventReceiver.Connect(settings["socket_token"])
 	else:
-		Parent.Log("INIT", "Stream Labs Socket Token is required. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens.")
+		Parent.Log(ScriptName, "Stream Labs Socket Token is required. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens -> SOCKET TOKEN")
 
 	return
 
@@ -149,16 +149,15 @@ def ReadResetDate():
 	global resetDateFilePath
 	resetDate = None
 	if os.path.isfile(resetDateFilePath):
-		Parent.Log("RESET DATE", "Reset Date File Found!")
+		Parent.Log(ScriptName, "Reset Date File Found!")
 		with open(resetDateFilePath) as f:
 			resetDateText = f.readline()
 			resetDateFromFile = datetime.strptime(resetDateText, "%Y-%m-%dT%H:%M:%S.%f")
 			# Reset hour again in the event the user changed the reset hour after the file was created.
 			resetDateFromFile = resetDateFromFile.replace(hour=int(settings["resetHour"]))
 			resetDate = resetDateFromFile
-			Parent.Log("RESET DATE", str(resetDate))
 	else:
-		Parent.Log("RESET DATE", "Reset Date File NOT Found!")
+		Parent.Log(ScriptName, "Reset Date File NOT Found! Updating reset date.")
 		resetDate = datetime.now().replace(hour=int(settings["resetHour"]), minute=0)
 		resetDate += timedelta(days=1)
 
@@ -221,12 +220,13 @@ def CheckAndProcessReset():
 # Socket Event Handlers - Thanks to Ocgineer!
 #---------------------------------------
 def EventReceiverConnected(sender, args):
-	Parent.Log(ScriptName, "Connected")
+	Parent.Log(ScriptName, "Daily Stream Goals - Event Receiver Connected")
 	return
 
 
 def EventReceiverDisconnected(senmder, args):
-	Parent.Log(ScriptName, "Disconnected")
+	Parent.Log(ScriptName, "Daily Stream Goals - Event Receiver Disconnected")
+	return
 
 
 def EventReceiverEvent(sender, args):
@@ -234,21 +234,20 @@ def EventReceiverEvent(sender, args):
 	if evntdata and evntdata.For == "twitch_account":
 		if evntdata.Type == "follow":
 			for message in evntdata.Message:
-				Parent.Log("follow", "{0} followed!!!".format(message.Name))
+				Parent.Log(ScriptName, "{0} followed!!!".format(message.Name))
 				currentFollows = int(settings["currentFollows"])
 				currentFollows = currentFollows + 1
 				settings["currentFollows"] = currentFollows
 				SimpleWriteToFile(followCurrentFilePath, currentFollows)
 				SimpleWriteToFile(followFullOutputPath, str(currentFollows) + settings["followDivisor"] + str(settings["followTarget"]))
 
-
 		elif evntdata.Type == "bits":
 			for message in evntdata.Message:
-				Parent.Log("bits", message.Message)
+				Parent.Log(ScriptName, "{0} cheered - {1}!!!".format(message.Name, message.Amount))
 
 		elif evntdata.Type == "subscription":
 			for message in evntdata.Message:
-				Parent.Log("subscription", "{0} subscribed!!!".format(message.Name))
+				Parent.Log(ScriptName, "{0} subscribed!!!".format(message.Name))
 				currentSubs = int(settings["currentSubs"])
 				currentSubs = currentSubs + 1
 				settings["currentSubs"] = currentSubs

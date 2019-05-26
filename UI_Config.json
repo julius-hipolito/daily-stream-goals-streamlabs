@@ -4,7 +4,7 @@
 		"type": "textbox",
 		"label": "Streamlabs Socket Token",
 		"value": "",
-		"tooltip": "The Streamlabs Socket Token. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens.",		
+		"tooltip": "The Streamlabs Socket Token. This can be found on the website via the left-hand side menu -> API Settings -> API Tokens -> Socket Token",		
 		"group": "General"
 	},
 	"resetHour": {
